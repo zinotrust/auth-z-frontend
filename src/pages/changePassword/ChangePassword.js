@@ -5,6 +5,15 @@ import PasswordInput from "../../components/passwordInput/PasswordInput";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "./ChangePassword.scss";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  changePassword,
+  logout,
+  RESET,
+} from "../../redux/features/auth/authSlice";
+import { SpinnerImg } from "../../components/loader/Loader";
+import useRedirectLoggedOutUser from "../../customHook/useRedirectLoggedOutUser";
+import { sendAutomatedEmail } from "../../redux/features/email/emailSlice";
 
 const initialState = {
   oldPassword: "",
@@ -13,28 +22,44 @@ const initialState = {
 };
 
 const ChangePassword = () => {
+  useRedirectLoggedOutUser("/login");
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [formData, setformData] = useState(initialState);
   const { oldPassword, password, password2 } = formData;
+
+  const { isLoading, user } = useSelector((state) => state.auth);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setformData({ ...formData, [name]: value });
   };
 
-  const changePass = async (e) => {
+  const updatePassword = async (e) => {
     e.preventDefault();
 
     if (password !== password2) {
       return toast.error("New passwords do not match");
     }
 
-    const formData = {
+    const userData = {
       oldPassword,
       password,
     };
 
-    // navigate("/profile");
+    const emailData = {
+      subject: "Password Changed - AUTH:Z",
+      send_to: user.email,
+      reply_to: "noreply@zinotrustacademy.com",
+      template: "changePassword",
+      url: "/forgot",
+    };
+
+    await dispatch(changePassword(userData));
+    await dispatch(sendAutomatedEmail(emailData));
+    await dispatch(logout());
+    dispatch(RESET());
+    navigate("/login");
   };
 
   return (
@@ -45,7 +70,7 @@ const ChangePassword = () => {
           <h2>Change Password</h2>
           <div className="--flex-start change-password">
             <Card cardClass={"card"}>
-              <form>
+              <form onSubmit={updatePassword}>
                 <p>
                   <label>Current Password:</label>
                   <PasswordInput
@@ -71,12 +96,20 @@ const ChangePassword = () => {
                     name="password2"
                     value={password2}
                     onChange={handleInputChange}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      toast.error("Cannot paste into input field.");
+                      return false;
+                    }}
                   />
                 </p>
-
-                <button className="--btn --btn-block --btn-danger">
-                  Change Password
-                </button>
+                {isLoading ? (
+                  <SpinnerImg />
+                ) : (
+                  <button className="--btn --btn-block --btn-danger">
+                    Change Password
+                  </button>
+                )}
               </form>
             </Card>
           </div>

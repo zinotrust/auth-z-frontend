@@ -3,13 +3,18 @@ import styles from "./auth.module.scss";
 import { TiUserAddOutline } from "react-icons/ti";
 import Card from "../../components/card/Card";
 import { toast } from "react-toastify";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import Loader from "../../components/loader/Loader";
 import PasswordInput from "../../components/passwordInput/PasswordInput";
 import { FaTimes } from "react-icons/fa";
-import { AiOutlineCheck } from "react-icons/ai";
 import { BsCheck2All } from "react-icons/bs";
+import { validateEmail } from "../../redux/features/auth/authService";
+import {
+  register,
+  RESET,
+  sendVerificationEmail,
+} from "../../redux/features/auth/authSlice";
 
 const initialState = {
   name: "",
@@ -21,7 +26,8 @@ const initialState = {
 const Register = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+
+  // const [isLoading, setIsLoading] = useState(false);
   const [formData, setformData] = useState(initialState);
   const { name, email, password, password2 } = formData;
 
@@ -29,6 +35,10 @@ const Register = () => {
   const [num, setNum] = useState(false);
   const [sChar, setSChar] = useState(false);
   const [passLength, setPassLength] = useState(false);
+
+  const { isLoading, isLoggedIn, isError, isSuccess, message } = useSelector(
+    (state) => state.auth
+  );
 
   const timesIcon = <FaTimes color="red" size={15} />;
   const checkIcon = <BsCheck2All color="green" size={15} />;
@@ -72,7 +82,7 @@ const Register = () => {
     setformData({ ...formData, [name]: value });
   };
 
-  const register = async (e) => {
+  const registerUser = async (e) => {
     e.preventDefault();
 
     if (!name || !email || !password) {
@@ -81,9 +91,9 @@ const Register = () => {
     if (password.length < 6) {
       return toast.error("Passwords must be up to 6 characters");
     }
-    // if (!validateEmail(email)) {
-    //   return toast.error("Please enter a valid email");
-    // }
+    if (!validateEmail(email)) {
+      return toast.error("Please enter a valid email");
+    }
     if (password !== password2) {
       return toast.error("Passwords do not match");
     }
@@ -93,8 +103,19 @@ const Register = () => {
       email,
       password,
     };
-    setIsLoading(true);
+    console.log(userData);
+
+    await dispatch(register(userData));
+    await dispatch(sendVerificationEmail());
   };
+
+  useEffect(() => {
+    if (isLoggedIn && isSuccess) {
+      navigate("/profile");
+    }
+
+    dispatch(RESET());
+  }, [isLoggedIn, isSuccess, message, navigate, dispatch]);
 
   return (
     <div className={`container ${styles.auth}`}>
@@ -106,7 +127,7 @@ const Register = () => {
           </div>
           <h2>Register</h2>
 
-          <form onSubmit={register}>
+          <form onSubmit={registerUser}>
             <input
               type="text"
               placeholder="Name"
@@ -140,22 +161,7 @@ const Register = () => {
                 return false;
               }}
             />
-            {/* <input
-              type="password"
-              placeholder="Password"
-              required
-              name="password"
-              value={password}
-              onChange={handleInputChange}
-            /> */}
-            {/* <input
-              type="password"
-              placeholder="Confirm Password"
-              required
-              name="password2"
-              value={password2}
-              onChange={handleInputChange}
-            /> */}
+
             {/* Password Strength Indicator */}
             <Card cardClass={styles.group}>
               {/* List  */}

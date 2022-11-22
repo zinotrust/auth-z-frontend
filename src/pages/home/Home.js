@@ -19,7 +19,7 @@ const Home = () => {
           </p>
           <div className="hero-buttons --flex-start">
             <button className="--btn --btn-danger">
-              <Link to={"/login"}>Register</Link>
+              <Link to={"/register"}>Register</Link>
             </button>
             <button className="--btn --btn-primary">
               <Link to={"/login"}>Login</Link>

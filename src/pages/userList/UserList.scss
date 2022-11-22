@@ -52,8 +52,8 @@
       }
       tbody {
         tr:hover {
-          cursor: pointer;
-          background-color: rgba(31, 147, 255, 0.3);
+          // cursor: pointer;
+          background-color: rgba(121, 136, 149, 0.3);
         }
       }
     }
@@ -69,9 +69,10 @@
   select {
     font-size: 1.6rem;
     font-weight: 300;
-    padding: 2px;
+    padding: 4px 8px;
+    margin: 0 5px 0 0;
     border: none;
-    border-bottom: 1px solid #777;
+    border-bottom: 2px solid #777;
     outline: none;
   }
 }

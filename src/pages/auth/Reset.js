@@ -1,9 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./auth.module.scss";
 import { MdPassword } from "react-icons/md";
 import Card from "../../components/card/Card";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
+import { RESET, resetPassword } from "../../redux/features/auth/authSlice";
+import Loader from "../../components/loader/Loader";
+import PasswordInput from "../../components/passwordInput/PasswordInput";
 
 const initialState = {
   password: "",
@@ -11,10 +15,16 @@ const initialState = {
 };
 
 const Reset = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [formData, setformData] = useState(initialState);
   const { password, password2 } = formData;
-
   const { resetToken } = useParams();
+
+  const { isLoading, isError, isSuccess, isLoggedIn, message } = useSelector(
+    (state) => state.auth
+  );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -35,10 +45,22 @@ const Reset = () => {
       password,
       password2,
     };
+
+    await dispatch(resetPassword({ userData, resetToken }));
+    await dispatch(RESET());
   };
+
+  useEffect(() => {
+    if (isSuccess && message.includes("Reset Successful")) {
+      navigate("/login");
+    }
+
+    dispatch(RESET());
+  }, [isError, isSuccess, message, isLoggedIn, dispatch, navigate]);
 
   return (
     <div className={`container ${styles.auth}`}>
+      {isLoading && <Loader />}
       <Card>
         <div className={styles.form}>
           <div className="--flex-center">
@@ -47,16 +69,15 @@ const Reset = () => {
           <h2>Reset Password</h2>
 
           <form onSubmit={reset}>
-            <input
-              type="password"
+            <PasswordInput
               placeholder="New Password"
               required
               name="password"
               value={password}
               onChange={handleInputChange}
             />
-            <input
-              type="password"
+
+            <PasswordInput
               placeholder="Confirm New Password"
               required
               name="password2"
